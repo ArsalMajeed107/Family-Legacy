@@ -1,0 +1,173 @@
+{
+  "users": {
+    "uid_arsal_majeed": {
+      "uid": "uid_arsal_majeed",
+      "email": "arsalmajeed287@gmail.com",
+      "displayName": "Arsal Majeed",
+      "photoUrl": "/assets/aistudio/arsal_pic_a1e52d81.jpeg",
+      "role": "developer_super_admin",
+      "accountStatus": "active",
+      "emailVerified": true,
+      "phoneVerified": true,
+      "memberId": "member_arsal_majeed",
+      "branchId": "branch_ghulam_central",
+      "createdAt": "2026-11-18T14:35:53.192Z",
+      "updatedAt": "2026-11-18T14:35:53.192Z"
+    }
+  },
+  "branches": {
+    "branch_ghulam_central": {
+      "id": "branch_ghulam_central",
+      "name": "Founding Lineage — Ghulam Heritage",
+      "description": "The primary ancestral trunk established by Grandfather Muhammad Ghulam and Grandmother Amna Gulam.",
+      "heritageLocation": "Pashtoon Ancestral Homestead",
+      "founderMemberId": "member_muhammad_ghula",
+      "accentTone": "pink",
+      "createdBy": "uid_arsal_majeed",
+      "createdAt": "2026-11-18T14:35:53.192Z",
+      "updatedAt": "2026-11-18T14:35:53.192Z"
+    }
+  },
+  "members": {
+    "member_muhammad_ghula": {
+      "id": "member_muhammad_ghula",
+      "fullName": "Muhammad Ghulam",
+      "gender": "male",
+      "birthDate": "1942-03-14",
+      "isDeceased": false,
+      "generation": 1,
+      "spouseId": "member_amna_gulam",
+      "branchId": "branch_ghulam_central",
+      "photoUrl": "/src/assets/images/portrait_grandfather_1795008100818.jpg",
+      "biography": "Founding Patriarch and Main Family Head. Honored for Pashtoon hospitality, integrity, and keeping every branch of the family united.",
+      "relationshipLabel": "Founding Grandfather · Main Family Head",
+      "isFoundingAncestor": true,
+      "status": "verified",
+      "createdBy": "uid_arsal_majeed",
+      "createdAt": "2026-11-18T14:35:53.192Z",
+      "updatedAt": "2026-11-18T14:35:53.192Z"
+    },
+    "member_amna_gulam": {
+      "id": "member_amna_gulam",
+      "fullName": "Amna Gulam",
+      "gender": "female",
+      "birthDate": "1947-08-22",
+      "isDeceased": false,
+      "generation": 1,
+      "spouseId": "member_muhammad_ghula",
+      "branchId": "branch_ghulam_central",
+      "photoUrl": "/src/assets/images/portrait_grandmother_1795008101922.jpg",
+      "biography": "Founding Matriarch whose warmth, oral storytelling, and enduring care nurtured every generation of the Ghulam household.",
+      "relationshipLabel": "Founding Grandmother · Matriarch",
+      "isFoundingAncestor": true,
+      "status": "verified",
+      "createdBy": "uid_arsal_majeed",
+      "createdAt": "2026-11-18T14:35:53.192Z",
+      "updatedAt": "2026-11-18T14:35:53.192Z"
+    },
+    "member_arsal_majeed": {
+      "id": "member_arsal_majeed",
+      "fullName": "Arsal Majeed",
+      "gender": "male",
+      "isDeceased": false,
+      "generation": 3,
+      "branchId": "branch_ghulam_central",
+      "photoUrl": "/assets/aistudio/arsal_pic_a1e52d81.jpeg",
+      "biography": "Grandson of Muhammad Ghulam & Amna Gulam, and Lead Architect & Developer Super Admin of Family Legacy.",
+      "relationshipLabel": "Grandson · Platform Developer",
+      "linkedUid": "uid_arsal_majeed",
+      "isFoundingAncestor": false,
+      "status": "verified",
+      "createdBy": "uid_arsal_majeed",
+      "createdAt": "2026-11-18T14:35:53.192Z",
+      "updatedAt": "2026-11-18T14:35:53.192Z"
+    }
+  },
+  "announcements": {
+    "ann_founding_welcome": {
+      "id": "ann_founding_welcome",
+      "title": "Family Legacy Heritage Archive Opened for All Generations",
+      "content": "Welcome to Family Legacy. The founding records of Grandfather Muhammad Ghulam and Grandmother Amna Gulam are now preserved. Family members may sign in to submit their registration requests.",
+      "category": "milestone",
+      "eventDate": "2026-11-18",
+      "isPublic": true,
+      "authorUid": "uid_arsal_majeed",
+      "authorName": "Family Administration",
+      "createdAt": "2026-11-18T14:35:53.192Z"
+    }
+  },
+  "gallery": {
+    "gal_ancestral_courtyard": {
+      "id": "gal_ancestral_courtyard",
+      "title": "The Ancestral Courtyard",
+      "caption": "Where generations gathered during seasonal reunions, shared meals, and passed down Pashtoon traditions.",
+      "imageUrl": "/src/assets/images/gallery_ancestral_home_1795008101426.jpg",
+      "category": "historical",
+      "year": "1978",
+      "isPublic": true,
+      "uploadedBy": "uid_arsal_majeed",
+      "createdAt": "2026-11-18T14:35:53.192Z"
+    },
+    "gal_chronicle_ledger": {
+      "id": "gal_chronicle_ledger",
+      "title": "The Family Chronicle & Keepsakes",
+      "caption": "Handwritten notebooks, letters, and archival portraits preserved from the early decades of Muhammad Ghulam and Amna Gulam.",
+      "imageUrl": "/src/assets/images/gallery_heirloom_chronicle_1795008101618.jpg",
+      "category": "document",
+      "year": "1984",
+      "isPublic": true,
+      "uploadedBy": "uid_arsal_majeed",
+      "createdAt": "2026-11-18T14:35:53.192Z"
+    }
+  },
+  "stories": {
+    "story_founding_roots": {
+      "id": "story_founding_roots",
+      "title": "From Pashtoon Roots to a Living Multigenerational Legacy",
+      "era": "1965 – Present",
+      "authorName": "Ghulam Heritage Archive",
+      "authorUid": "uid_arsal_majeed",
+      "excerpt": "How Grandfather Muhammad Ghulam and Grandmother Amna Gulam built a home anchored in Pashtoon honor, education, and kinship.",
+      "content": "Every enduring family begins with two individuals whose quiet perseverance shapes generations yet unborn. Grandfather Muhammad Ghulam and Grandmother Amna Gulam established a household where elders were honored, children were encouraged to learn, and relatives from every branch always found an open hujra and warm hospitality.\n\nThis digital chronicle preserves those memories so grandchildren and great-grandchildren across the world can trace their roots, celebrate milestones, and carry forward a shared heritage.",
+      "isPublic": true,
+      "createdAt": "2026-11-18T14:35:53.192Z"
+    }
+  },
+  "registrationRequests": {},
+  "auditLogs": {
+    "log_init_founding": {
+      "id": "log_init_founding",
+      "actorUid": "uid_arsal_majeed",
+      "actorEmail": "arsalmajeed287@gmail.com",
+      "actorRole": "developer_super_admin",
+      "action": "INITIALIZE_FOUNDING_LINEAGE",
+      "targetCollection": "members",
+      "targetId": "member_muhammad_ghula",
+      "details": "Initialized founding grandparents Muhammad Ghulam & Amna Gulam and developer node Arsal Majeed.",
+      "createdAt": "2026-11-18T14:35:53.192Z"
+    }
+  },
+  "memberPrivateInfo": {},
+  "aiConversations": {
+    "uid_arsal_majeed": []
+  },
+  "systemSettings": {
+    "platformName": "Family Legacy",
+    "registrationEnabled": true,
+    "aiAssistantEnabled": true,
+    "maintenanceMode": false,
+    "defaultWallpaperIntensity": "standard",
+    "defaultWallpaperColor": "sapphire",
+    "updatedBy": "uid_arsal_majeed",
+    "updatedAt": "2026-11-18T14:35:53.192Z"
+  },
+  "publicSummary": {
+    "totalMembers": 3,
+    "totalGenerations": 3,
+    "totalBranches": 1,
+    "grandfatherName": "Muhammad Ghulam",
+    "grandmotherName": "Amna Gulam",
+    "familyMotto": "Rooted in Pashtoon honor, united across generations, and remembered with gratitude.",
+    "updatedAt": "2026-11-18T14:35:53.192Z"
+  }
+}

@@ -1,0 +1,468 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedEmail() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isBootstrappedDeveloper() {
+      return isVerifiedEmail() && request.auth.token.email == 'arsalmajeed287@gmail.com';
+    }
+
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isDeveloper() {
+      return isBootstrappedDeveloper() || (
+        isVerifiedEmail() &&
+        userExists() &&
+        userDoc().role == 'developer_super_admin' &&
+        userDoc().accountStatus == 'active'
+      );
+    }
+
+    function isFamilyHead() {
+      return isDeveloper() || (
+        isVerifiedEmail() &&
+        userExists() &&
+        userDoc().role == 'family_head' &&
+        userDoc().accountStatus == 'active'
+      );
+    }
+
+    function isBranchAdmin() {
+      return isFamilyHead() || (
+        isVerifiedEmail() &&
+        userExists() &&
+        userDoc().role == 'branch_admin' &&
+        userDoc().accountStatus == 'active'
+      );
+    }
+
+    function isVerifiedMember() {
+      return isBranchAdmin() || (
+        isVerifiedEmail() &&
+        userExists() &&
+        userDoc().role == 'verified_member' &&
+        userDoc().accountStatus == 'active'
+      );
+    }
+
+    function isOptionalString(data, key, maxLen) {
+      return !(key in data) || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    function isOptionalBool(data, key) {
+      return !(key in data) || data[key] is bool;
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserAccount(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'accountStatus', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'accountStatus', 'memberId', 'branchId', 'photoUrl', 'emailVerified', 'phoneVerified', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 254
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120
+        && data.role in ['developer_super_admin', 'family_head', 'branch_admin', 'verified_member', 'pending_member']
+        && data.accountStatus in ['active', 'pending', 'suspended']
+        && isOptionalString(data, 'memberId', 128)
+        && isOptionalString(data, 'branchId', 128)
+        && isOptionalString(data, 'photoUrl', 200000)
+        && isOptionalBool(data, 'emailVerified')
+        && isOptionalBool(data, 'phoneVerified')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBranch(data) {
+      return data.keys().hasAll(['id', 'name', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'name', 'description', 'heritageLocation', 'founderMemberId', 'accentTone', 'createdBy', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 120
+        && isOptionalString(data, 'description', 1000)
+        && isOptionalString(data, 'heritageLocation', 160)
+        && isOptionalString(data, 'founderMemberId', 128)
+        && isOptionalString(data, 'accentTone', 40)
+        && isValidId(data.createdBy)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMember(data) {
+      return data.keys().hasAll(['id', 'fullName', 'gender', 'generation', 'isDeceased', 'status', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'fullName', 'gender', 'birthDate', 'deathDate', 'isDeceased', 'generation', 'fatherId', 'motherId', 'spouseId', 'branchId', 'photoUrl', 'biography', 'relationshipLabel', 'linkedUid', 'isFoundingAncestor', 'status', 'createdBy', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120
+        && data.gender in ['male', 'female', 'other']
+        && isOptionalString(data, 'birthDate', 32)
+        && isOptionalString(data, 'deathDate', 32)
+        && data.isDeceased is bool
+        && data.generation is int && data.generation >= 1 && data.generation <= 30
+        && isOptionalString(data, 'fatherId', 128)
+        && isOptionalString(data, 'motherId', 128)
+        && isOptionalString(data, 'spouseId', 128)
+        && isOptionalString(data, 'branchId', 128)
+        && isOptionalString(data, 'photoUrl', 350000)
+        && isOptionalString(data, 'biography', 4000)
+        && isOptionalString(data, 'relationshipLabel', 100)
+        && isOptionalString(data, 'linkedUid', 128)
+        && isOptionalBool(data, 'isFoundingAncestor')
+        && data.status in ['verified', 'pending', 'archived']
+        && isValidId(data.createdBy)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMemberPrivateInfo(data) {
+      return data.keys().hasAll(['memberId', 'updatedAt'])
+        && data.keys().hasOnly(['memberId', 'linkedUid', 'email', 'phone', 'address', 'phoneVerified', 'updatedAt'])
+        && isValidId(data.memberId)
+        && isOptionalString(data, 'linkedUid', 128)
+        && isOptionalString(data, 'email', 254)
+        && isOptionalString(data, 'phone', 40)
+        && isOptionalString(data, 'address', 400)
+        && isOptionalBool(data, 'phoneVerified')
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRegistrationRequest(data) {
+      return data.keys().hasAll(['id', 'requesterUid', 'requestType', 'fullName', 'gender', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'requesterUid', 'requesterEmail', 'requestType', 'targetMemberId', 'fullName', 'gender', 'birthDate', 'suggestedFatherName', 'suggestedMotherName', 'suggestedSpouseName', 'branchId', 'contactPhone', 'biography', 'status', 'reviewNotes', 'reviewedBy', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.requesterUid)
+        && isOptionalString(data, 'requesterEmail', 254)
+        && data.requestType in ['new_member', 'profile_correction']
+        && isOptionalString(data, 'targetMemberId', 128)
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120
+        && data.gender in ['male', 'female', 'other']
+        && isOptionalString(data, 'birthDate', 32)
+        && isOptionalString(data, 'suggestedFatherName', 120)
+        && isOptionalString(data, 'suggestedMotherName', 120)
+        && isOptionalString(data, 'suggestedSpouseName', 120)
+        && isOptionalString(data, 'branchId', 128)
+        && isOptionalString(data, 'contactPhone', 40)
+        && isOptionalString(data, 'biography', 2000)
+        && data.status in ['pending', 'approved', 'rejected']
+        && isOptionalString(data, 'reviewNotes', 1000)
+        && isOptionalString(data, 'reviewedBy', 128)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAnnouncement(data) {
+      return data.keys().hasAll(['id', 'title', 'content', 'category', 'isPublic', 'authorUid', 'createdAt'])
+        && data.keys().hasOnly(['id', 'title', 'content', 'category', 'eventDate', 'isPublic', 'authorUid', 'authorName', 'createdAt'])
+        && isValidId(data.id)
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 160
+        && data.content is string && data.content.size() >= 2 && data.content.size() <= 2000
+        && data.category in ['announcement', 'event', 'birthday', 'anniversary', 'milestone']
+        && isOptionalString(data, 'eventDate', 32)
+        && data.isPublic is bool
+        && isValidId(data.authorUid)
+        && isOptionalString(data, 'authorName', 120)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidGalleryItem(data) {
+      return data.keys().hasAll(['id', 'title', 'imageUrl', 'category', 'isPublic', 'uploadedBy', 'createdAt'])
+        && data.keys().hasOnly(['id', 'title', 'caption', 'imageUrl', 'category', 'year', 'isPublic', 'uploadedBy', 'createdAt'])
+        && isValidId(data.id)
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 160
+        && isOptionalString(data, 'caption', 1000)
+        && data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 450000
+        && data.category in ['historical', 'family_event', 'portrait', 'document']
+        && isOptionalString(data, 'year', 20)
+        && data.isPublic is bool
+        && isValidId(data.uploadedBy)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidStory(data) {
+      return data.keys().hasAll(['id', 'title', 'content', 'isPublic', 'authorUid', 'createdAt'])
+        && data.keys().hasOnly(['id', 'title', 'era', 'authorName', 'authorUid', 'excerpt', 'content', 'isPublic', 'createdAt'])
+        && isValidId(data.id)
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 160
+        && isOptionalString(data, 'era', 80)
+        && isOptionalString(data, 'authorName', 120)
+        && isValidId(data.authorUid)
+        && isOptionalString(data, 'excerpt', 400)
+        && data.content is string && data.content.size() >= 10 && data.content.size() <= 8000
+        && data.isPublic is bool
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAiMessage(data) {
+      return data.keys().hasAll(['id', 'userId', 'sender', 'text', 'createdAt'])
+        && data.keys().hasOnly(['id', 'userId', 'sender', 'language', 'text', 'escalated', 'createdAt'])
+        && isValidId(data.id)
+        && isValidId(data.userId)
+        && data.sender in ['user', 'assistant']
+        && isOptionalString(data, 'language', 20)
+        && data.text is string && data.text.size() >= 1 && data.text.size() <= 6000
+        && isOptionalBool(data, 'escalated')
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['id', 'actorUid', 'action', 'createdAt'])
+        && data.keys().hasOnly(['id', 'actorUid', 'actorEmail', 'actorRole', 'action', 'targetCollection', 'targetId', 'details', 'createdAt'])
+        && isValidId(data.id)
+        && isValidId(data.actorUid)
+        && isOptionalString(data, 'actorEmail', 254)
+        && isOptionalString(data, 'actorRole', 60)
+        && data.action is string && data.action.size() >= 2 && data.action.size() <= 120
+        && isOptionalString(data, 'targetCollection', 80)
+        && isOptionalString(data, 'targetId', 128)
+        && isOptionalString(data, 'details', 1000)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidPublicOverview(data) {
+      return data.keys().hasAll(['totalMembers', 'totalGenerations', 'totalBranches', 'grandfatherName', 'grandmotherName', 'updatedAt'])
+        && data.keys().hasOnly(['totalMembers', 'totalGenerations', 'totalBranches', 'grandfatherName', 'grandmotherName', 'familyMotto', 'updatedAt'])
+        && data.totalMembers is int && data.totalMembers >= 0 && data.totalMembers <= 100000
+        && data.totalGenerations is int && data.totalGenerations >= 0 && data.totalGenerations <= 100
+        && data.totalBranches is int && data.totalBranches >= 0 && data.totalBranches <= 1000
+        && data.grandfatherName is string && data.grandfatherName.size() >= 1 && data.grandfatherName.size() <= 120
+        && data.grandmotherName is string && data.grandmotherName.size() >= 1 && data.grandmotherName.size() <= 120
+        && isOptionalString(data, 'familyMotto', 300)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSystemSettings(data) {
+      return data.keys().hasAll(['platformName', 'registrationEnabled', 'aiAssistantEnabled', 'maintenanceMode', 'updatedAt'])
+        && data.keys().hasOnly(['platformName', 'registrationEnabled', 'aiAssistantEnabled', 'maintenanceMode', 'defaultWallpaperIntensity', 'updatedBy', 'updatedAt'])
+        && data.platformName is string && data.platformName.size() >= 2 && data.platformName.size() <= 120
+        && data.registrationEnabled is bool
+        && data.aiAssistantEnabled is bool
+        && data.maintenanceMode is bool
+        && isOptionalString(data, 'defaultWallpaperIntensity', 40)
+        && isOptionalString(data, 'updatedBy', 128)
+        && data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Security Blocks
+
+    // Users (PII Protected)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isSignedIn() && (isOwner(userId) || isBranchAdmin());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBranchAdmin());
+      allow create: if isValidId(userId) && isSignedIn() && isOwner(userId) && isValidUserAccount(incoming())
+        && incoming().uid == userId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          (isBootstrappedDeveloper() && incoming().role == 'developer_super_admin' && incoming().accountStatus == 'active') ||
+          (incoming().role == 'pending_member' && incoming().accountStatus == 'pending')
+        );
+      allow update: if isValidId(userId) && isVerifiedEmail() && isValidUserAccount(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isDeveloper() && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'accountStatus', 'memberId', 'branchId', 'displayName', 'photoUrl', 'phoneVerified', 'updatedAt'])) ||
+          (isFamilyHead() && incoming().role in ['family_head', 'branch_admin', 'verified_member', 'pending_member'] && existing().role != 'developer_super_admin' && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'accountStatus', 'memberId', 'branchId', 'updatedAt'])) ||
+          (isOwner(userId) && incoming().role == existing().role && incoming().accountStatus == existing().accountStatus && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoUrl', 'emailVerified', 'phoneVerified', 'updatedAt']))
+        );
+      allow delete: if isValidId(userId) && isDeveloper() && userId != request.auth.uid;
+    }
+
+    // Branches
+    match /branches/{branchId} {
+      allow get: if isValidId(branchId) && isVerifiedMember();
+      allow list: if isVerifiedMember() && resource.data.id is string;
+      allow create: if isValidId(branchId) && isFamilyHead() && isValidBranch(incoming())
+        && incoming().id == branchId
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(branchId) && isFamilyHead() && isValidBranch(incoming())
+        && incoming().id == existing().id
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'heritageLocation', 'founderMemberId', 'accentTone', 'updatedAt']);
+      allow delete: if isValidId(branchId) && isFamilyHead();
+    }
+
+    // Family Members (Genealogy graph, zero PII)
+    match /members/{memberId} {
+      allow get: if isValidId(memberId) && isVerifiedMember();
+      allow list: if isVerifiedMember() && resource.data.status in ['verified', 'pending', 'archived'];
+      allow create: if isValidId(memberId) && isBranchAdmin() && isValidMember(incoming())
+        && incoming().id == memberId
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(memberId) && isVerifiedEmail() && isValidMember(incoming())
+        && incoming().id == existing().id
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isBranchAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'gender', 'birthDate', 'deathDate', 'isDeceased', 'generation', 'fatherId', 'motherId', 'spouseId', 'branchId', 'photoUrl', 'biography', 'relationshipLabel', 'linkedUid', 'isFoundingAncestor', 'status', 'updatedAt'])) ||
+          (isVerifiedMember() && existing().linkedUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['biography', 'photoUrl', 'updatedAt']))
+        );
+      allow delete: if isValidId(memberId) && isFamilyHead();
+    }
+
+    // Member Private Info (Isolated PII)
+    match /memberPrivateInfo/{memberId} {
+      allow get: if isValidId(memberId) && isVerifiedEmail() && (
+        isFamilyHead() ||
+        (exists(/databases/$(database)/documents/members/$(memberId)) && get(/databases/$(database)/documents/members/$(memberId)).data.linkedUid == request.auth.uid)
+      );
+      allow list: if isVerifiedEmail() && (resource.data.linkedUid == request.auth.uid || isFamilyHead());
+      allow create: if isValidId(memberId) && isVerifiedEmail() && isValidMemberPrivateInfo(incoming())
+        && incoming().memberId == memberId
+        && incoming().updatedAt == request.time
+        && (
+          isFamilyHead() ||
+          (exists(/databases/$(database)/documents/members/$(memberId)) && get(/databases/$(database)/documents/members/$(memberId)).data.linkedUid == request.auth.uid)
+        );
+      allow update: if isValidId(memberId) && isVerifiedEmail() && isValidMemberPrivateInfo(incoming())
+        && incoming().memberId == existing().memberId
+        && incoming().updatedAt == request.time
+        && (
+          isFamilyHead() ||
+          (existing().linkedUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'phone', 'address', 'phoneVerified', 'updatedAt']))
+        );
+      allow delete: if isValidId(memberId) && isFamilyHead();
+    }
+
+    // Registration Requests
+    match /registrationRequests/{requestId} {
+      allow get: if isValidId(requestId) && isSignedIn() && (resource.data.requesterUid == request.auth.uid || isBranchAdmin());
+      allow list: if isSignedIn() && (resource.data.requesterUid == request.auth.uid || isBranchAdmin());
+      allow create: if isValidId(requestId) && isVerifiedEmail() && isValidRegistrationRequest(incoming())
+        && incoming().id == requestId
+        && incoming().requesterUid == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(requestId) && isBranchAdmin() && isValidRegistrationRequest(incoming())
+        && incoming().id == existing().id
+        && incoming().requesterUid == existing().requesterUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (existing().status == 'pending' || isFamilyHead())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'reviewNotes', 'reviewedBy', 'updatedAt']);
+      allow delete: if isValidId(requestId) && isFamilyHead();
+    }
+
+    // Announcements
+    match /announcements/{announcementId} {
+      allow get: if isValidId(announcementId) && (resource.data.isPublic == true || isVerifiedMember());
+      allow list: if resource.data.isPublic == true || (isSignedIn() && resource.data.authorUid is string);
+      allow create: if isValidId(announcementId) && isBranchAdmin() && isValidAnnouncement(incoming())
+        && incoming().id == announcementId
+        && incoming().authorUid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(announcementId) && isBranchAdmin() && isValidAnnouncement(incoming())
+        && incoming().id == existing().id
+        && incoming().authorUid == existing().authorUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'category', 'eventDate', 'isPublic']);
+      allow delete: if isValidId(announcementId) && isBranchAdmin();
+    }
+
+    // Heritage Gallery
+    match /gallery/{itemId} {
+      allow get: if isValidId(itemId) && (resource.data.isPublic == true || isVerifiedMember());
+      allow list: if resource.data.isPublic == true || (isSignedIn() && resource.data.uploadedBy is string);
+      allow create: if isValidId(itemId) && isBranchAdmin() && isValidGalleryItem(incoming())
+        && incoming().id == itemId
+        && incoming().uploadedBy == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(itemId) && isBranchAdmin() && isValidGalleryItem(incoming())
+        && incoming().id == existing().id
+        && incoming().uploadedBy == existing().uploadedBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'caption', 'category', 'year', 'isPublic']);
+      allow delete: if isValidId(itemId) && isBranchAdmin();
+    }
+
+    // Family Stories
+    match /stories/{storyId} {
+      allow get: if isValidId(storyId) && (resource.data.isPublic == true || isVerifiedMember());
+      allow list: if resource.data.isPublic == true || (isSignedIn() && resource.data.authorUid is string);
+      allow create: if isValidId(storyId) && isVerifiedMember() && isValidStory(incoming())
+        && incoming().id == storyId
+        && incoming().authorUid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(storyId) && isVerifiedEmail() && isValidStory(incoming())
+        && incoming().id == existing().id
+        && incoming().authorUid == existing().authorUid
+        && incoming().createdAt == existing().createdAt
+        && (isBranchAdmin() || existing().authorUid == request.auth.uid)
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'era', 'excerpt', 'content', 'isPublic']);
+      allow delete: if isValidId(storyId) && (isBranchAdmin() || existing().authorUid == request.auth.uid);
+    }
+
+    // Private AI Chat History per User
+    match /aiConversations/{userId}/messages/{messageId} {
+      allow get: if isValidId(userId) && isValidId(messageId) && isOwner(userId);
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(userId) && isValidId(messageId) && isOwner(userId) && isValidAiMessage(incoming())
+        && incoming().id == messageId
+        && incoming().userId == userId
+        && incoming().createdAt == request.time;
+      allow delete: if isValidId(userId) && isValidId(messageId) && isOwner(userId);
+    }
+
+    // Immutable Audit Logs
+    match /auditLogs/{logId} {
+      allow get: if isValidId(logId) && isBranchAdmin();
+      allow list: if isSignedIn() && (isBranchAdmin() || resource.data.actorUid == request.auth.uid);
+      allow create: if isValidId(logId) && isVerifiedEmail() && isValidAuditLog(incoming())
+        && incoming().id == logId
+        && incoming().actorUid == request.auth.uid
+        && incoming().createdAt == request.time;
+    }
+
+    // Public Aggregate Summary (No PII)
+    match /publicSummary/{docId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(docId) && isBranchAdmin() && isValidPublicOverview(incoming())
+        && incoming().updatedAt == request.time;
+    }
+
+    // Developer-Only System Settings
+    match /systemSettings/{docId} {
+      allow get: if isValidId(docId);
+      allow create, update: if isValidId(docId) && isDeveloper() && isValidSystemSettings(incoming())
+        && incoming().updatedAt == request.time;
+    }
+  }
+}

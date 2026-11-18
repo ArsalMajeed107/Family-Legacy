@@ -1,0 +1,280 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Authenticated user account and RBAC role assignment.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 254 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "role": {
+          "type": "string",
+          "enum": ["developer_super_admin", "family_head", "branch_admin", "verified_member", "pending_member"]
+        },
+        "accountStatus": {
+          "type": "string",
+          "enum": ["active", "pending", "suspended"]
+        },
+        "memberId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "photoUrl": { "type": "string", "maxLength": 200000 },
+        "emailVerified": { "type": "boolean" },
+        "phoneVerified": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "role", "accountStatus", "createdAt", "updatedAt"]
+    },
+    "FamilyBranch": {
+      "title": "FamilyBranch",
+      "description": "A verified family branch descending from the founding grandparents.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "heritageLocation": { "type": "string", "maxLength": 160 },
+        "founderMemberId": { "type": "string", "maxLength": 128 },
+        "accentTone": { "type": "string", "maxLength": 40 },
+        "createdBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "createdBy", "createdAt", "updatedAt"]
+    },
+    "FamilyMember": {
+      "title": "FamilyMember",
+      "description": "Core genealogy profile for a family member (non-PII fields).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "fullName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "birthDate": { "type": "string", "maxLength": 32 },
+        "deathDate": { "type": "string", "maxLength": 32 },
+        "isDeceased": { "type": "boolean" },
+        "generation": { "type": "number" },
+        "fatherId": { "type": "string", "maxLength": 128 },
+        "motherId": { "type": "string", "maxLength": 128 },
+        "spouseId": { "type": "string", "maxLength": 128 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "photoUrl": { "type": "string", "maxLength": 350000 },
+        "biography": { "type": "string", "maxLength": 4000 },
+        "relationshipLabel": { "type": "string", "maxLength": 100 },
+        "linkedUid": { "type": "string", "maxLength": 128 },
+        "isFoundingAncestor": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["verified", "pending", "archived"] },
+        "createdBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "fullName", "gender", "generation", "isDeceased", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "MemberPrivateInfo": {
+      "title": "MemberPrivateInfo",
+      "description": "Isolated PII contact details for a family member.",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "linkedUid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 254 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "address": { "type": "string", "maxLength": 400 },
+        "phoneVerified": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["memberId", "updatedAt"]
+    },
+    "RegistrationRequest": {
+      "title": "RegistrationRequest",
+      "description": "Submitted request for joining the family tree or updating verified profile records.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "requesterUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "requesterEmail": { "type": "string", "maxLength": 254 },
+        "requestType": { "type": "string", "enum": ["new_member", "profile_correction"] },
+        "targetMemberId": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "birthDate": { "type": "string", "maxLength": 32 },
+        "suggestedFatherName": { "type": "string", "maxLength": 120 },
+        "suggestedMotherName": { "type": "string", "maxLength": 120 },
+        "suggestedSpouseName": { "type": "string", "maxLength": 120 },
+        "branchId": { "type": "string", "maxLength": 128 },
+        "contactPhone": { "type": "string", "maxLength": 40 },
+        "biography": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "reviewNotes": { "type": "string", "maxLength": 1000 },
+        "reviewedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "requesterUid", "requestType", "fullName", "gender", "status", "createdAt", "updatedAt"]
+    },
+    "FamilyAnnouncement": {
+      "title": "FamilyAnnouncement",
+      "description": "Announcements, milestone events, birthdays, and anniversaries.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "content": { "type": "string", "minLength": 2, "maxLength": 2000 },
+        "category": { "type": "string", "enum": ["announcement", "event", "birthday", "anniversary", "milestone"] },
+        "eventDate": { "type": "string", "maxLength": 32 },
+        "isPublic": { "type": "boolean" },
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "content", "category", "isPublic", "authorUid", "createdAt"]
+    },
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "Historical and family gallery photographs and archival memories.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "caption": { "type": "string", "maxLength": 1000 },
+        "imageUrl": { "type": "string", "minLength": 1, "maxLength": 450000 },
+        "category": { "type": "string", "enum": ["historical", "family_event", "portrait", "document"] },
+        "year": { "type": "string", "maxLength": 20 },
+        "isPublic": { "type": "boolean" },
+        "uploadedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "imageUrl", "category", "isPublic", "uploadedBy", "createdAt"]
+    },
+    "FamilyStory": {
+      "title": "FamilyStory",
+      "description": "Long-form ancestral stories and heritage chronicles.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "era": { "type": "string", "maxLength": 80 },
+        "authorName": { "type": "string", "maxLength": 120 },
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "excerpt": { "type": "string", "maxLength": 400 },
+        "content": { "type": "string", "minLength": 10, "maxLength": 8000 },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "content", "isPublic", "authorUid", "createdAt"]
+    },
+    "AiMessage": {
+      "title": "AiMessage",
+      "description": "FamilyGuide AI conversation message scoped per user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "sender": { "type": "string", "enum": ["user", "assistant"] },
+        "language": { "type": "string", "enum": ["en", "ur", "roman-ur"] },
+        "text": { "type": "string", "minLength": 1, "maxLength": 6000 },
+        "escalated": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "sender", "text", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable administrative and developer security log.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actorUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actorEmail": { "type": "string", "maxLength": 254 },
+        "actorRole": { "type": "string", "maxLength": 60 },
+        "action": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "targetCollection": { "type": "string", "maxLength": 80 },
+        "targetId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "actorUid", "action", "createdAt"]
+    },
+    "PublicOverview": {
+      "title": "PublicOverview",
+      "description": "Non-PII aggregate family counts and founding heritage summary for homepage.",
+      "type": "object",
+      "properties": {
+        "totalMembers": { "type": "number" },
+        "totalGenerations": { "type": "number" },
+        "totalBranches": { "type": "number" },
+        "grandfatherName": { "type": "string", "maxLength": 120 },
+        "grandmotherName": { "type": "string", "maxLength": 120 },
+        "familyMotto": { "type": "string", "maxLength": 300 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["totalMembers", "totalGenerations", "totalBranches", "grandfatherName", "grandmotherName", "updatedAt"]
+    },
+    "SystemSettings": {
+      "title": "SystemSettings",
+      "description": "Developer Super Admin exclusive global configuration.",
+      "type": "object",
+      "properties": {
+        "platformName": { "type": "string", "maxLength": 120 },
+        "registrationEnabled": { "type": "boolean" },
+        "aiAssistantEnabled": { "type": "boolean" },
+        "maintenanceMode": { "type": "boolean" },
+        "defaultWallpaperIntensity": { "type": "string", "enum": ["subtle", "standard", "luminous"] },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["platformName", "registrationEnabled", "aiAssistantEnabled", "maintenanceMode", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "User accounts, roles, and verification status."
+    },
+    "/branches/{branchId}": {
+      "schema": { "$ref": "#/entities/FamilyBranch" },
+      "description": "Family branches managed by the Main Family Head."
+    },
+    "/members/{memberId}": {
+      "schema": { "$ref": "#/entities/FamilyMember" },
+      "description": "Verified family member genealogy profiles (no PII)."
+    },
+    "/memberPrivateInfo/{memberId}": {
+      "schema": { "$ref": "#/entities/MemberPrivateInfo" },
+      "description": "Isolated PII contact records for family members."
+    },
+    "/registrationRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/RegistrationRequest" },
+      "description": "Pending and reviewed registration or profile correction requests."
+    },
+    "/announcements/{announcementId}": {
+      "schema": { "$ref": "#/entities/FamilyAnnouncement" },
+      "description": "Family announcements, birthdays, anniversaries, and events."
+    },
+    "/gallery/{itemId}": {
+      "schema": { "$ref": "#/entities/GalleryItem" },
+      "description": "Family heritage photographs and archival memories."
+    },
+    "/stories/{storyId}": {
+      "schema": { "$ref": "#/entities/FamilyStory" },
+      "description": "Family history narratives and heritage stories."
+    },
+    "/aiConversations/{userId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/AiMessage" },
+      "description": "Private FamilyGuide AI chat history per user."
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable administrative and developer audit logs."
+    },
+    "/publicSummary/{docId}": {
+      "schema": { "$ref": "#/entities/PublicOverview" },
+      "description": "Non-PII aggregate stats and founding lineage summary."
+    },
+    "/systemSettings/{docId}": {
+      "schema": { "$ref": "#/entities/SystemSettings" },
+      "description": "Developer Super Admin exclusive global settings."
+    }
+  }
+}
